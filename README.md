@@ -1,11 +1,11 @@
 # SpringBoot 项目初始模板
 
-> 作者：[程序员鱼皮](https://github.com/liyupi)
-> 仅分享于 [编程导航知识星球](https://yupi.icu)
+> 作者：IT小蝈
+
 
 基于 Java SpringBoot 的项目初始模板，整合了常用框架和主流业务的示例代码。
 
-只需 1 分钟即可完成内容网站的后端！！！大家还可以在此基础上快速开发自己的项目。
+
 
 [toc]
 
@@ -13,9 +13,9 @@
 
 ### 主流框架 & 特性
 
-- Spring Boot 2.7.x（贼新）
+- Spring Boot 2.7.x
 - Spring MVC
-- MyBatis + MyBatis Plus 数据访问（开启分页）
+- MyBatis + MyBatis Plus 数据访问
 - Spring Boot 调试工具和项目处理器
 - Spring AOP 切面编程
 - Spring Scheduler 定时任务
@@ -25,7 +25,7 @@
 
 - MySQL 数据库
 - Redis 内存数据库
-- Elasticsearch 搜索引擎
+
 - 腾讯云 COS 对象存储
 
 ### 工具类
@@ -52,15 +52,7 @@
 
 ## 业务功能
 
-- 提供示例 SQL（用户、帖子、帖子点赞、帖子收藏表）
-- 用户登录、注册、注销、更新、检索、权限管理
-- 帖子创建、删除、编辑、更新、数据库检索、ES 灵活检索
-- 帖子点赞、取消点赞
-- 帖子收藏、取消收藏、检索已收藏帖子
-- 帖子全量同步 ES、增量同步 ES 定时任务
-- 支持微信开放平台登录
-- 支持微信公众号订阅、收发消息、设置菜单
-- 支持分业务的文件上传
+
 
 ### 单元测试
 
@@ -70,11 +62,6 @@
 ### 架构设计
 
 - 合理分层
-
-
-## 快速上手
-
-> 所有需要修改的地方鱼皮都标记了 `todo`，便于大家找到修改的位置~
 
 ### MySQL 数据库
 
@@ -141,41 +128,5 @@ spring:
   elasticsearch:
     uris: http://localhost:9200
     username: root
-    password: 123456
+    password: 1234
 ```
-
-2）复制 `sql/post_es_mapping.json` 文件中的内容，通过调用 Elasticsearch 的接口或者 Kibana Dev Tools 来创建索引（相当于数据库建表）
-
-```
-PUT post_v1
-{
- 参数见 sql/post_es_mapping.json 文件
-}
-```
-
-这步不会操作的话需要补充下 Elasticsearch 的知识，或者自行百度一下~
-
-3）开启同步任务，将数据库的帖子同步到 Elasticsearch
-
-找到 job 目录下的 `FullSyncPostToEs` 和 `IncSyncPostToEs` 文件，取消掉 `@Component` 注解的注释，再次执行程序即可触发同步：
-
-```java
-// todo 取消注释开启任务
-//@Component
-```
-
-### 业务代码生成器
-
-支持自动生成 Service、Controller、数据模型代码，配合 MyBatisX 插件，可以快速开发增删改查等实用基础功能。
-
-找到 `generate.CodeGenerator` 类，修改生成参数和生成路径，并且支持注释掉不需要的生成逻辑，然后运行即可。
-
-```
-// 指定生成参数
-String packageName = "com.yupi.springbootinit";
-String dataName = "用户评论";
-String dataKey = "userComment";
-String upperDataKey = "UserComment";
-```
-
-生成代码后，可以移动到实际项目中，并且按照 `// todo` 注释的提示来针对自己的业务需求进行修改。
