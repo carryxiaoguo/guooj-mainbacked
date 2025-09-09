@@ -80,8 +80,6 @@ spring:
 
 3）启动项目，访问 `http://localhost:8101/api/doc.html` 即可打开接口文档，不需要写前端就能在线调试接口了~
 
-![](doc/swagger.png)
-
 ### Redis 分布式登录
 
 1）修改 `application.yml` 的 Redis 配置为你自己的：
