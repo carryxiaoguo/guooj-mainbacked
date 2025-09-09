@@ -91,7 +91,7 @@ spring:
     host: localhost
     port: 6379
     timeout: 5000
-    password: 123456
+
 ```
 
 2）修改 `application.yml` 中的 session 存储方式：
