@@ -71,9 +71,9 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
+    url: jdbc:mysql://localhost:3306/guooj
     username: root
-    password: 123456
+    password: 1234
 ```
 
 2）执行 `sql/create_table.sql` 中的数据库语句，自动创建库表
