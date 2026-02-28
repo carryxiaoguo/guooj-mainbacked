@@ -2,7 +2,10 @@ package com.itguo.guooj.model.dto.question;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -14,6 +17,8 @@ import java.util.List;
  * 
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class QuestionAddRequest implements Serializable {
 
     /**
@@ -46,7 +51,10 @@ public class QuestionAddRequest implements Serializable {
     /**
      * 判题配置
      */
-    private List<JudgeConfig> judgeConfig;
+
+    private JudgeConfig judgeConfig;
+
+
 
     private static final long serialVersionUID = 1L;
 }

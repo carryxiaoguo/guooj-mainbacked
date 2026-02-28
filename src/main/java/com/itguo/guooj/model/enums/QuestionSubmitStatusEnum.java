@@ -1,5 +1,6 @@
 package com.itguo.guooj.model.enums;
 
+import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Arrays;
@@ -9,11 +10,14 @@ import java.util.stream.Collectors;
 /**
  * 判题状态
  */
+@Getter
 public enum QuestionSubmitStatusEnum {
+
+
     WAITING("等待中", 0),
     RUNNING("判题中",1),
-    SUCCEED("成功",3),
-    FAILED("失败",4);
+    SUCCEED("通过",2),
+    FAILED("未通过",3);
 
 
 
@@ -53,11 +57,4 @@ public enum QuestionSubmitStatusEnum {
         return null;
     }
 
-    public Integer getValue() {
-        return value;
-    }
-
-    public String getText() {
-        return text;
-    }
 }

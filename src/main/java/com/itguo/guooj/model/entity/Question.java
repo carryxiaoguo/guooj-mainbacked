@@ -15,12 +15,13 @@ import lombok.NoArgsConstructor;
  */
 @TableName(value ="question")
 @Data
-
+@AllArgsConstructor
+@NoArgsConstructor
 public class Question {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)//ASSIGN_ID利用雪花算法生成id 且ID引入了时间戳，基本上保持自增的。 防止代码被爬
     private Long id;
 
     /**

@@ -11,17 +11,24 @@ import com.itguo.guooj.exception.BusinessException;
 import com.itguo.guooj.mapper.UserMapper;
 import com.itguo.guooj.model.dto.user.UserQueryRequest;
 import com.itguo.guooj.model.entity.User;
+import com.itguo.guooj.model.entity.UserQuestionAccept;
 import com.itguo.guooj.model.enums.UserRoleEnum;
 import com.itguo.guooj.model.vo.LoginUserVO;
+import com.itguo.guooj.model.vo.SystemStatsVO;
+import com.itguo.guooj.model.vo.UserActivityVO;
+import com.itguo.guooj.model.vo.UserStatsVO;
 import com.itguo.guooj.model.vo.UserVO;
+import com.itguo.guooj.service.UserQuestionAcceptService;
 import com.itguo.guooj.service.UserService;
 import com.itguo.guooj.utils.SqlUtils;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -35,16 +42,27 @@ import org.springframework.util.DigestUtils;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
-
     /**
      * 盐值，混淆密码
      */
     public static final String SALT = "xiaoguo";
 
+    @Resource
+    private UserQuestionAcceptService userQuestionAcceptService;
+
+    @Resource
+    private UserMapper userMapper;
+
+    @Resource
+    private com.itguo.guooj.mapper.QuestionMapper questionMapper;
+
+    @Resource
+    private com.itguo.guooj.mapper.QuestionSubmitMapper questionSubmitMapper;
+
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword,String userName) {
         // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword,userName)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
@@ -57,6 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        //保证现成安全,防止并发注册
         synchronized (userAccount.intern()) {
             // 账户不能重复
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -65,12 +84,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (count > 0) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
             }
+            //用户名不能重复
+            queryWrapper.eq("userName", userAccount);
+            long countUserName = this.baseMapper.selectCount(queryWrapper);
+            if (countUserName > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名重复");
+            }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
             // 3. 插入数据
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setUserName(userName);
+            // 设置默认头像
+            user.setUserAvatar("https://api.dicebear.com/7.x/avataaars/svg?seed=" + userAccount);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
@@ -107,39 +135,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
-
-    @Override
-    public LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
-        String unionId = wxOAuth2UserInfo.getUnionId();
-        String mpOpenId = wxOAuth2UserInfo.getOpenid();
-        // 单机锁
-        synchronized (unionId.intern()) {
-            // 查询用户是否已存在
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("unionId", unionId);
-            User user = this.getOne(queryWrapper);
-            // 被封号，禁止登录
-            if (user != null && UserRoleEnum.BAN.getValue().equals(user.getUserRole())) {
-                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "该用户已被封，禁止登录");
-            }
-            // 用户不存在则创建
-            if (user == null) {
-                user = new User();
-                user.setUnionId(unionId);
-                user.setMpOpenId(mpOpenId);
-                user.setUserAvatar(wxOAuth2UserInfo.getHeadImgUrl());
-                user.setUserName(wxOAuth2UserInfo.getNickname());
-                boolean result = this.save(user);
-                if (!result) {
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
-                }
-            }
-            // 记录用户的登录态
-            request.getSession().setAttribute(USER_LOGIN_STATE, user);
-            return getLoginUserVO(user);
-        }
-    }
-
     /**
      * 获取当前登录用户
      *
@@ -250,8 +245,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
         Long id = userQueryRequest.getId();
-        String unionId = userQueryRequest.getUnionId();
-        String mpOpenId = userQueryRequest.getMpOpenId();
         String userName = userQueryRequest.getUserName();
         String userProfile = userQueryRequest.getUserProfile();
         String userRole = userQueryRequest.getUserRole();
@@ -259,13 +252,88 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String sortOrder = userQueryRequest.getSortOrder();
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(id != null, "id", id);
-        queryWrapper.eq(StringUtils.isNotBlank(unionId), "unionId", unionId);
-        queryWrapper.eq(StringUtils.isNotBlank(mpOpenId), "mpOpenId", mpOpenId);
         queryWrapper.eq(StringUtils.isNotBlank(userRole), "userRole", userRole);
         queryWrapper.like(StringUtils.isNotBlank(userProfile), "userProfile", userProfile);
         queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public UserStatsVO getUserStats(Long userId) {
+        UserStatsVO userStats = new UserStatsVO();
+        
+        // 查询用户通过的题目数量
+        QueryWrapper<UserQuestionAccept> acceptWrapper = new QueryWrapper<>();
+        acceptWrapper.eq("userId", userId);
+        int solvedCount = (int) userQuestionAcceptService.count(acceptWrapper);
+        
+        // 查询用户总提交数和通过数
+        int submitCount = userMapper.countUserSubmits(userId);
+        int acceptCount = userMapper.countUserAccepts(userId);
+        
+        // 计算通过率
+        double acceptRate = submitCount > 0 ? (double) acceptCount / submitCount * 100 : 0.0;
+        
+        userStats.setSolvedCount(solvedCount);
+        userStats.setSubmitCount(submitCount);
+        userStats.setAcceptCount(acceptCount);
+        userStats.setAcceptRate(Math.round(acceptRate * 10.0) / 10.0); // 保留一位小数
+        
+        return userStats;
+    }
+
+    @Override
+    public boolean updatePassword(Long userId, String oldPassword, String newPassword) {
+        // 1. 验证当前密码
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        
+        String encryptOldPassword = DigestUtils.md5DigestAsHex((SALT + oldPassword).getBytes());
+        if (!encryptOldPassword.equals(user.getUserPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "当前密码错误");
+        }
+        
+        // 2. 更新密码
+        String encryptNewPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        user.setUserPassword(encryptNewPassword);
+        
+        return this.updateById(user);
+    }
+
+    @Override
+    public List<UserActivityVO> getUserActivities(Long userId) {
+        List<UserActivityVO> activities = new ArrayList<>();
+        
+        // 查询最近的提交记录作为活动记录
+        List<UserActivityVO> submitActivities = userMapper.getUserRecentSubmits(userId, 10);
+        activities.addAll(submitActivities);
+        
+        // 可以添加其他类型的活动记录，比如登录记录等
+        // 这里暂时只返回提交记录
+        
+        return activities;
+    }
+
+    @Override
+    public SystemStatsVO getSystemStats() {
+        SystemStatsVO stats = new SystemStatsVO();
+        
+        // 统计题目总数
+        long questionCount = questionMapper.selectCount(null);
+        stats.setQuestionCount(questionCount);
+        
+        // 统计用户总数
+        long userCount = this.count();
+        stats.setUserCount(userCount);
+        
+        // 统计提交总数
+        long submitCount = questionSubmitMapper.selectCount(null);
+        stats.setSubmitCount(submitCount);
+        
+        return stats;
     }
 }

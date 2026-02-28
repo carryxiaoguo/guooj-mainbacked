@@ -22,7 +22,7 @@ public class QuestionQueryRequest extends PageRequest implements Serializable {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -60,7 +60,6 @@ public class QuestionQueryRequest extends PageRequest implements Serializable {
      * 创建用户 id
      */
     private Long userId;
-
 
     private static final long serialVersionUID = 1L;
 }

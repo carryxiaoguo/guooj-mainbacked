@@ -34,16 +34,16 @@ public interface QuestionService extends IService<Question> {
 
 
     /**
-     * 获取帖子封装
+     * 获取题目封装
      *
-     * @param question
+     * @param questionVO
      * @param request
      * @return
      */
-    QuestionVO getQuestionVO(Question question, HttpServletRequest request);
+    QuestionVO getQuestionVO(Question questionVO, HttpServletRequest request);
 
     /**
-     * 分页获取帖子封装
+     * 分页获取题目封装
      *
      * @param questionPage
      * @param request

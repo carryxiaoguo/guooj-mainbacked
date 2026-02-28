@@ -1,6 +1,4 @@
 # 数据库初始化
-# @author <a href="https://github.com/liyupi">程序员鱼皮</a>
-# @from <a href="https://yupi.icu">编程导航知识星球</a>
 
 -- 创建库
 create database if not exists guooj;
@@ -53,7 +51,7 @@ create table if not exists question_submit
     language   varchar(128)                       not null comment '编程语言',
     code       text                               not null comment '用户代码',
     userId     bigint                             not null comment '创建用户id',
-    status     int      default 0                 not null comment '判题状态(0待判题 1 判题中 2-成功 3-失败)',
+    status     int      default 0                 not null comment '判题状态(0->待判题   1->判题中   2->成功   3->失败)',
     judgeInfo  text                               null comment '判题信息',
     isDelete   tinyint  default 0                 not null comment '是否删除',
     createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',

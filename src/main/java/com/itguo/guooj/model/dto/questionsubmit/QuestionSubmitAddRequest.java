@@ -2,8 +2,12 @@ package com.itguo.guooj.model.dto.questionsubmit;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class QuestionSubmitAddRequest {
+public class QuestionSubmitAddRequest implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * 编程语言

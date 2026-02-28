@@ -1,5 +1,6 @@
 package com.itguo.guooj.model.enums;
 
+import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
  *
  * 
  */
+@Getter
 public enum QuestionSubmitJudgeInfoMessageEnum {
 
     ACCEPTED("成功", "accepted"),
@@ -18,7 +20,13 @@ public enum QuestionSubmitJudgeInfoMessageEnum {
     COMPILE_ERROR("compile error","编译错误"),
     MEMORY_LIMIT_EXCEEDED("memory limit ","内存溢出"),
     TIME_LIMIT_EXCEEDED("time limit exceeded","时间超时"),
-    PRESENTATION_ERROR("presentation error","展示错误");
+    PRESENTATION_ERROR("presentation error", "展示错误"),
+    WAITING("Waiting", "等待"),
+    OUTPUT_LIMIT_EXCEEDED("output limit exceeded", "输出溢出"),
+    DANGEROUS_OPERATION("dangerous operation", "危险操作"),
+    RUNNING_ERROR("running error", "运行错误"),
+    SYSTEM_ERROR("system error", "系统错误");
+
 
     private final String text;
 
@@ -56,11 +64,4 @@ public enum QuestionSubmitJudgeInfoMessageEnum {
         return null;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public String getText() {
-        return text;
-    }
 }

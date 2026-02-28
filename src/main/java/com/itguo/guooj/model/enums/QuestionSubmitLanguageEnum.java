@@ -1,5 +1,6 @@
 package com.itguo.guooj.model.enums;
 
+import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Arrays;
@@ -11,12 +12,14 @@ import java.util.stream.Collectors;
  *
  * 
  */
+@Getter
 public enum QuestionSubmitLanguageEnum {
 
-    JAVA("JAVA", "Java"),
-    CPLUSPULS("c++","c++"),
-    C("c","c"),
-    PYTHON("python","python");
+    JAVA("JAVA", "java"),
+    CPLUSPULS("CPP","cpp"),
+    C("C","c"),
+    PYTHON("Python", "python"),
+    JAVASCRIPT("JavaScript", "javascript");
 
     private final String text;
 
@@ -54,11 +57,4 @@ public enum QuestionSubmitLanguageEnum {
         return null;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public String getText() {
-        return text;
-    }
 }

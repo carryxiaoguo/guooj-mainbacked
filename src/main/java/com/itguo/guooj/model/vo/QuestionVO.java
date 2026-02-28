@@ -1,13 +1,23 @@
 package com.itguo.guooj.model.vo;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.util.StringUtils;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.itguo.guooj.model.dto.question.JudgeConfig;
 import com.itguo.guooj.model.entity.Question;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,10 +27,22 @@ import java.util.List;
  */
 @TableName(value = "question")
 @Data
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+@AllArgsConstructor
+@Slf4j
 public class QuestionVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * id
+     */
+    private Long id;
+    /**
+     * 创建用户 id
+     */
+    private Long userId;
     /**
      * 标题
      */
@@ -51,7 +73,10 @@ public class QuestionVO implements Serializable {
      */
     private JudgeConfig judgeConfig;
 
-
+    /**
+     * 创建时间
+     */
+    private Date createTime;
     /**
      * 创建用户人的信息
      */
@@ -67,15 +92,31 @@ public class QuestionVO implements Serializable {
         if (questionVO == null) {
             return null;
         }
-        Question question = new Question();
-        BeanUtils.copyProperties(questionVO, question);
-        List<String> tagList = questionVO.getTags();
-        question.setTags(JSONUtil.toJsonStr(tagList));
-        JudgeConfig voJudgeConfig = questionVO.getJudgeConfig();
-        if (voJudgeConfig != null) {
-            question.setJudgeConfig(JSONUtil.toJsonStr(voJudgeConfig));
+        try {
+            Question question = new Question();
+            BeanUtils.copyProperties(questionVO, question);
+
+            // 安全处理 tags
+            List<String> tagList = questionVO.getTags();
+            if (CollectionUtils.isNotEmpty(tagList)) {
+                question.setTags(JSONUtil.toJsonStr(tagList));
+            } else {
+                question.setTags(null);
+            }
+
+            // 安全处理 judgeConfig
+            JudgeConfig voJudgeConfig = questionVO.getJudgeConfig();
+            if (voJudgeConfig != null) {
+                question.setJudgeConfig(JSONUtil.toJsonStr(voJudgeConfig));
+            } else {
+                question.setJudgeConfig(null);
+            }
+
+            return question;
+        } catch (Exception e) {
+            log.error("QuestionVO to Question conversion failed", e);
+            return null;
         }
-        return question;
     }
 
     /**
@@ -88,10 +129,38 @@ public class QuestionVO implements Serializable {
         if (question == null) {
             return null;
         }
-        QuestionVO questionVO = new QuestionVO();
-        BeanUtils.copyProperties(question, questionVO);
-        questionVO.setTags(JSONUtil.toList(question.getTags(), String.class));
-        questionVO.setJudgeConfig(JSONUtil.toBean(question.getJudgeConfig(), JudgeConfig.class));
-        return questionVO;
+        try {
+            QuestionVO questionVO = new QuestionVO();
+            BeanUtils.copyProperties(question, questionVO);
+
+            // 安全处理 tags
+            if (StringUtils.isNotBlank(question.getTags())) {
+                try {
+                    questionVO.setTags(JSONUtil.toList(question.getTags(), String.class));
+                } catch (Exception e) {
+                    log.error("解析Tags失败: {}", question.getTags(), e);
+                    questionVO.setTags(new ArrayList<>());
+                }
+            } else {
+                questionVO.setTags(new ArrayList<>());
+            }
+
+            // 安全处理 judgeConfig
+            if (StringUtils.isNotBlank(question.getJudgeConfig())) {
+                try {
+                   questionVO.setJudgeConfig(JSONUtil.toBean(question.getJudgeConfig(),JudgeConfig.class));
+                } catch (Exception e) {
+                    log.error("解析JudgeConfig JSON失败: {}", question.getJudgeConfig(), e);
+                    questionVO.setJudgeConfig(new JudgeConfig());
+                }
+            } else {
+                questionVO.setJudgeConfig(new JudgeConfig());
+            }
+
+            return questionVO;
+        } catch (Exception e) {
+            log.error("Question 对象转换为 QuestionVO 失败", e);
+            return null;
+        }
     }
 }

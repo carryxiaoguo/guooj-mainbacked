@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.itguo.guooj.model.dto.user.UserQueryRequest;
 import com.itguo.guooj.model.entity.User;
 import com.itguo.guooj.model.vo.LoginUserVO;
+import com.itguo.guooj.model.vo.SystemStatsVO;
+import com.itguo.guooj.model.vo.UserActivityVO;
+import com.itguo.guooj.model.vo.UserStatsVO;
 import com.itguo.guooj.model.vo.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 
 /**
  * 用户服务
@@ -25,7 +27,7 @@ public interface UserService extends IService<User> {
      * @param checkPassword 校验密码
      * @return 新用户 id
      */
-    long userRegister(String userAccount, String userPassword, String checkPassword);
+    long userRegister(String userAccount, String userPassword, String checkPassword,String userName);
 
     /**
      * 用户登录
@@ -36,15 +38,6 @@ public interface UserService extends IService<User> {
      * @return 脱敏后的用户信息
      */
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
-
-    /**
-     * 用户登录（微信开放平台）
-     *
-     * @param wxOAuth2UserInfo 从微信获取的用户信息
-     * @param request
-     * @return 脱敏后的用户信息
-     */
-    LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request);
 
     /**
      * 获取当前登录用户
@@ -116,5 +109,38 @@ public interface UserService extends IService<User> {
      * @return
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    /**
+     * 获取用户统计信息
+     *
+     * @param userId
+     * @return
+     */
+    UserStatsVO getUserStats(Long userId);
+
+    /**
+     * 修改密码
+     *
+     * @param userId
+     * @param oldPassword
+     * @param newPassword
+     * @return
+     */
+    boolean updatePassword(Long userId, String oldPassword, String newPassword);
+
+    /**
+     * 获取用户活动记录
+     *
+     * @param userId
+     * @return
+     */
+    List<UserActivityVO> getUserActivities(Long userId);
+
+    /**
+     * 获取系统统计信息
+     *
+     * @return
+     */
+    SystemStatsVO getSystemStats();
 
 }

@@ -6,18 +6,21 @@ import com.itguo.guooj.common.BaseResponse;
 import com.itguo.guooj.common.DeleteRequest;
 import com.itguo.guooj.common.ErrorCode;
 import com.itguo.guooj.common.ResultUtils;
-import com.itguo.guooj.config.WxOpenConfig;
 import com.itguo.guooj.constant.UserConstant;
 import com.itguo.guooj.exception.BusinessException;
 import com.itguo.guooj.exception.ThrowUtils;
 import com.itguo.guooj.model.dto.user.UserAddRequest;
 import com.itguo.guooj.model.dto.user.UserLoginRequest;
+import com.itguo.guooj.model.dto.user.UserPasswordUpdateRequest;
 import com.itguo.guooj.model.dto.user.UserQueryRequest;
 import com.itguo.guooj.model.dto.user.UserRegisterRequest;
 import com.itguo.guooj.model.dto.user.UserUpdateMyRequest;
 import com.itguo.guooj.model.dto.user.UserUpdateRequest;
 import com.itguo.guooj.model.entity.User;
 import com.itguo.guooj.model.vo.LoginUserVO;
+import com.itguo.guooj.model.vo.SystemStatsVO;
+import com.itguo.guooj.model.vo.UserActivityVO;
+import com.itguo.guooj.model.vo.UserStatsVO;
 import com.itguo.guooj.model.vo.UserVO;
 import com.itguo.guooj.service.UserService;
 
@@ -27,9 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
-import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
-import me.chanjar.weixin.mp.api.WxMpService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
@@ -55,9 +55,6 @@ public class UserController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private WxOpenConfig wxOpenConfig;
-
     // region 登录相关
 
     /**
@@ -74,10 +71,11 @@ public class UserController {
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        String userName = userRegisterRequest.getUserName();
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword,userName)) {
             return null;
         }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        long result = userService.userRegister(userAccount, userPassword, checkPassword,userName);
         return ResultUtils.success(result);
     }
 
@@ -102,28 +100,6 @@ public class UserController {
         return ResultUtils.success(loginUserVO);
     }
 
-    /**
-     * 用户登录（微信开放平台）
-     */
-    @GetMapping("/login/wx_open")
-    public BaseResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam("code") String code) {
-        WxOAuth2AccessToken accessToken;
-        try {
-            WxMpService wxService = wxOpenConfig.getWxMpService();
-            accessToken = wxService.getOAuth2Service().getAccessToken(code);
-            WxOAuth2UserInfo userInfo = wxService.getOAuth2Service().getUserInfo(accessToken, code);
-            String unionId = userInfo.getUnionId();
-            String mpOpenId = userInfo.getOpenid();
-            if (StringUtils.isAnyBlank(unionId, mpOpenId)) {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-            }
-            return ResultUtils.success(userService.userLoginByMpOpen(userInfo, request));
-        } catch (Exception e) {
-            log.error("userLoginByWxOpen error", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-        }
-    }
 
     /**
      * 用户注销
@@ -315,5 +291,76 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 获取用户统计信息
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/stats")
+    public BaseResponse<UserStatsVO> getUserStats(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        UserStatsVO userStats = userService.getUserStats(loginUser.getId());
+        return ResultUtils.success(userStats);
+    }
+
+    /**
+     * 修改密码
+     *
+     * @param passwordUpdateRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/update/password")
+    public BaseResponse<Boolean> updatePassword(@RequestBody UserPasswordUpdateRequest passwordUpdateRequest,
+            HttpServletRequest request) {
+        if (passwordUpdateRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String oldPassword = passwordUpdateRequest.getOldPassword();
+        String newPassword = passwordUpdateRequest.getNewPassword();
+        String confirmPassword = passwordUpdateRequest.getConfirmPassword();
+        
+        if (StringUtils.isAnyBlank(oldPassword, newPassword, confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码不能为空");
+        }
+        
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        
+        if (newPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新密码长度不能少于8位");
+        }
+        
+        User loginUser = userService.getLoginUser(request);
+        boolean result = userService.updatePassword(loginUser.getId(), oldPassword, newPassword);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 获取用户活动记录
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/activities")
+    public BaseResponse<List<UserActivityVO>> getUserActivities(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        List<UserActivityVO> activities = userService.getUserActivities(loginUser.getId());
+        return ResultUtils.success(activities);
+    }
+
+    /**
+     * 获取系统统计信息
+     *
+     * @return
+     */
+    @GetMapping("/system/stats")
+    public BaseResponse<SystemStatsVO> getSystemStats() {
+        SystemStatsVO systemStats = userService.getSystemStats();
+        return ResultUtils.success(systemStats);
     }
 }

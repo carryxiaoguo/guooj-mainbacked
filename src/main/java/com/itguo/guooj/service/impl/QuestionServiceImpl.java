@@ -8,6 +8,7 @@ import com.itguo.guooj.common.ErrorCode;
 import com.itguo.guooj.constant.CommonConstant;
 import com.itguo.guooj.exception.BusinessException;
 import com.itguo.guooj.exception.ThrowUtils;
+import com.itguo.guooj.model.dto.question.JudgeConfig;
 import com.itguo.guooj.model.dto.question.QuestionQueryRequest;
 import com.itguo.guooj.model.entity.*;
 import com.itguo.guooj.model.vo.QuestionVO;
@@ -16,11 +17,15 @@ import com.itguo.guooj.service.QuestionService;
 import com.itguo.guooj.mapper.QuestionMapper;
 import com.itguo.guooj.service.UserService;
 import com.itguo.guooj.utils.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.Build;
 import org.springframework.stereotype.Service;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,7 @@ import java.util.stream.Collectors;
  * @createDate 2025-09-08 21:24:55
  */
 @Service
+@Slf4j
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         implements QuestionService {
 
@@ -77,11 +83,11 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         if (StringUtils.isNotBlank(judgeConfig) && content.length() > 8192) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "判题配置过长");
         }*/
-        verifyIfThereAreParameters(title,TITLE_MAX_LENGTH,"标题过长");
-        verifyIfThereAreParameters(content,TEXT_MAX_LENGTH,"内容过长");
-        verifyIfThereAreParameters(answer,TEXT_MAX_LENGTH,"答案太长");
-        verifyIfThereAreParameters(judgeCase,TEXT_MAX_LENGTH,"判题用例过长");
-        verifyIfThereAreParameters(judgeConfig,TEXT_MAX_LENGTH,"判题配置过长");
+        verifyIfThereAreParameters(title, TITLE_MAX_LENGTH, "标题过长");
+        verifyIfThereAreParameters(content, TEXT_MAX_LENGTH, "内容过长");
+        verifyIfThereAreParameters(answer, TEXT_MAX_LENGTH, "答案太长");
+        verifyIfThereAreParameters(judgeCase, TEXT_MAX_LENGTH, "判题用例过长");
+        verifyIfThereAreParameters(judgeConfig, TEXT_MAX_LENGTH, "判题配置过长");
     }
 
     /**
@@ -119,8 +125,10 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         return queryWrapper;
     }
 
+
     /**
-     * 获取题目返回信息  TODO 获取提交数和
+     * 获取题目返回信息
+     *
      * @param question
      * @param request
      * @return
@@ -128,18 +136,17 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Override
     public QuestionVO getQuestionVO(Question question, HttpServletRequest request) {
         QuestionVO questionVO = QuestionVO.objToVo(question);
-        // 1. 关联查询用户信息
-        Long userId = question.getUserId();
-        User user = null;
-        if (userId != null && userId > 0) {
-            user = userService.getById(userId);
+        //关联用户信息
+        User user = userService.getById(question.getUserId());
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        UserVO userVO = userService.getUserVO(user);
-        questionVO.setUserVO(userVO);
+        questionVO.setUserVO(userService.getUserVO(user));
         return questionVO;
     }
 
     /**
+     * 分页查询题目信息 给用户返回的信息
      *
      * @param questionPage
      * @param request
@@ -170,13 +177,16 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
     }
-    // 有参数则校验
 
-      private void verifyIfThereAreParameters(String fieldValue, int maxLength, String splicingFields){
-          if (StringUtils.isNotBlank(fieldValue) && fieldValue.length() > maxLength) {
-              throw new BusinessException(ErrorCode.PARAMS_ERROR, splicingFields + "过长");
-          }
-      }
+
+
+
+    // 有参数则校验
+    private void verifyIfThereAreParameters(String fieldValue, int maxLength, String splicingFields) {
+        if (StringUtils.isNotBlank(fieldValue) && fieldValue.length() > maxLength) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, splicingFields + "过长");
+        }
+    }
 
 
 }

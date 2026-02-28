@@ -50,7 +50,7 @@ public class QuestionUpdateRequest implements Serializable {
     /**
      * 判题配置
      */
-    private List<JudgeConfig> judgeConfig;
+    private JudgeConfig judgeConfig;
 
 
     private static final long serialVersionUID = 1L;
