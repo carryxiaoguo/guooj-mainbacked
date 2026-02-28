@@ -5,6 +5,7 @@ import com.alibaba.excel.util.StringUtils;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
+import com.itguo.guooj.model.dto.question.JudgeCase;
 import com.itguo.guooj.model.dto.question.JudgeConfig;
 import com.itguo.guooj.model.entity.Question;
 import lombok.AllArgsConstructor;
@@ -69,6 +70,11 @@ public class QuestionVO implements Serializable {
     private Integer acceptNum;
 
     /**
+     * 判题用例
+     */
+    private List<JudgeCase> judgeCase;
+
+    /**
      * 判题配置
      */
     private JudgeConfig judgeConfig;
@@ -110,6 +116,14 @@ public class QuestionVO implements Serializable {
                 question.setJudgeConfig(JSONUtil.toJsonStr(voJudgeConfig));
             } else {
                 question.setJudgeConfig(null);
+            }
+
+            // 安全处理 judgeCase
+            List<JudgeCase> voJudgeCase = questionVO.getJudgeCase();
+            if (CollectionUtils.isNotEmpty(voJudgeCase)) {
+                question.setJudgeCase(JSONUtil.toJsonStr(voJudgeCase));
+            } else {
+                question.setJudgeCase(null);
             }
 
             return question;
@@ -155,6 +169,18 @@ public class QuestionVO implements Serializable {
                 }
             } else {
                 questionVO.setJudgeConfig(new JudgeConfig());
+            }
+
+            // 安全处理 judgeCase
+            if (StringUtils.isNotBlank(question.getJudgeCase())) {
+                try {
+                    questionVO.setJudgeCase(JSONUtil.toList(question.getJudgeCase(), JudgeCase.class));
+                } catch (Exception e) {
+                    log.error("解析JudgeCase JSON失败: {}", question.getJudgeCase(), e);
+                    questionVO.setJudgeCase(new ArrayList<>());
+                }
+            } else {
+                questionVO.setJudgeCase(new ArrayList<>());
             }
 
             return questionVO;
