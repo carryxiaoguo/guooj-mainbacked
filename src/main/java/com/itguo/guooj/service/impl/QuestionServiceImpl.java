@@ -20,7 +20,6 @@ import com.itguo.guooj.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.Build;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

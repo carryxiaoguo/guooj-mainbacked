@@ -9,6 +9,7 @@ import com.itguo.guooj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.itguo.guooj.judge.codesandbox.model.ExecuteCodeResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * 远程代码沙箱 实际调用接口
@@ -18,16 +19,19 @@ public class RemoteCodeSandBox implements CodeSandBox {
     //添加鉴权 防止代码沙箱模块在公网裸奔 设置请求头和密钥
     public static final String AUTH_REQUEST_HEADER = "auth";
 
-    public static final String AUTH_REQUEST_SECRET = "secretKey";
+    @Value("${codesandbox.secret:secretKey}")
+    private String authSecret;
+
+    @Value("${codesandbox.url:http://localhost:8090/execute}")
+    private String sandboxUrl;
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         log.info("远程代码沙箱");
-        String url = "http://localhost:8090/execute";
         String json = JSONUtil.toJsonStr(executeCodeRequest);
-        String responseStr = HttpUtil.createPost(url)
+        String responseStr = HttpUtil.createPost(sandboxUrl)
                 .body(json)
-                .header(AUTH_REQUEST_HEADER,AUTH_REQUEST_SECRET)//设置请求头和密钥
+                .header(AUTH_REQUEST_HEADER, authSecret)
                 .execute()
                 .body();
         if (StringUtils.isBlank(responseStr)) {
