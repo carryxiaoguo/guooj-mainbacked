@@ -14,14 +14,16 @@ public class CodeSendBoxFactory {
      * 此处传入的代码沙箱的类型
      *
      * @param type
+     * @param sandboxUrl 代码沙箱URL
+     * @param authSecret 认证密钥
      * @return
      */
-    public static CodeSandBox newInstance(String type) {
+    public static CodeSandBox newInstance(String type, String sandboxUrl, String authSecret) {
         switch (type) {
             case "example":
                 return new ExampleCodeSandBox();
             case "remote":
-                return new RemoteCodeSandBox();
+                return new RemoteCodeSandBox(sandboxUrl, authSecret);
             case "thirdParty":
                 return new ThirdPartyCodeSandBox();
             default:

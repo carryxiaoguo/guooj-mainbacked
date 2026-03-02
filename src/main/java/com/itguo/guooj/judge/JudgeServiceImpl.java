@@ -39,6 +39,10 @@ public class JudgeServiceImpl implements JudgeService {
     private com.itguo.guooj.service.UserQuestionAcceptService userQuestionAcceptService;
     @Value("${codesandbox.type:example}")
     private String type;
+    @Value("${codesandbox.url:http://localhost:8090/execute}")
+    private String sandboxUrl;
+    @Value("${codesandbox.secret:secretKey}")
+    private String authSecret;
     @Resource
     private JudgeManger judgeManger;
 
@@ -78,7 +82,7 @@ public class JudgeServiceImpl implements JudgeService {
         }
         
         //调用代码沙箱
-        CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type);//调用代码沙箱
+        CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type, sandboxUrl, authSecret);//调用代码沙箱
         codeSandBox = new CodeSanBoxProxy(codeSandBox);  //获取传入参数exampleCodeSandBox的日志
         String language = submitInfo.getLanguage();
         String code = submitInfo.getCode();

@@ -27,4 +27,4 @@ mybatis-plus:
 # 代码沙箱 - 本地开发地址
 codesandbox:
   url: http://localhost:8090/execute
-  secret: secretKey
+  secret: aa77766654321cc

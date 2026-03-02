@@ -17,6 +17,10 @@ import java.util.Scanner;
 class CodeSandBoxTest {
     @Value("${codesandbox.type:remote}")
     private String type;
+    @Value("${codesandbox.url:http://localhost:8090/execute}")
+    private String sandboxUrl;
+    @Value("${codesandbox.secret:secretKey}")
+    private String authSecret;
 
     @Test
     void executeCode() {
@@ -37,7 +41,7 @@ class CodeSandBoxTest {
 
     @Test
     void executeCodeByValue() {
-        CodeSandBox examplecodeSandBox = CodeSendBoxFactory.newInstance(type);//示例
+        CodeSandBox examplecodeSandBox = CodeSendBoxFactory.newInstance(type, sandboxUrl, authSecret);//示例
         String code = "print(hello world)";
         String language = QuestionSubmitLanguageEnum.PYTHON.getValue();
         List<String> inputList = Arrays.asList("1 2", "3 4");
@@ -53,7 +57,7 @@ class CodeSandBoxTest {
 
     @Test
     void executeCodeProxy() {
-        CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type); //远程
+        CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type, sandboxUrl, authSecret); //远程
         codeSandBox = new CodeSanBoxProxy(codeSandBox); //获取传入参数examplecodeSandBox的日志
         String code = "public class Main {\n" +
                 "    public static void main(String[] args) {\n" +
@@ -79,7 +83,8 @@ class CodeSandBoxTest {
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String type = scanner.next();
-            CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type);
+            // 注意: main方法中无法注入配置,这里使用默认值
+            CodeSandBox codeSandBox = CodeSendBoxFactory.newInstance(type, "http://localhost:8090/execute", "secretKey");
             String code = "print(hello world)";
             String language = QuestionSubmitLanguageEnum.PYTHON.getValue();
             List<String> inputList = Arrays.asList("1 2", "3 4");

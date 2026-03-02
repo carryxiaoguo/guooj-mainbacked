@@ -19,11 +19,13 @@ public class RemoteCodeSandBox implements CodeSandBox {
     //添加鉴权 防止代码沙箱模块在公网裸奔 设置请求头和密钥
     public static final String AUTH_REQUEST_HEADER = "auth";
 
-    @Value("${codesandbox.secret:secretKey}")
     private String authSecret;
-
-    @Value("${codesandbox.url:http://localhost:8090/execute}")
     private String sandboxUrl;
+
+    public RemoteCodeSandBox(String sandboxUrl, String authSecret) {
+        this.sandboxUrl = sandboxUrl;
+        this.authSecret = authSecret;
+    }
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
