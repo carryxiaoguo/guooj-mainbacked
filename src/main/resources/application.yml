@@ -29,6 +29,17 @@ mybatis-plus:
       logic-not-delete-value: 0
   configuration:
     map-underscore-to-camel-case: false
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+  queue:
+    judge: judge_queue
+  exchange:
+    judge: judge_exchange
+  routing-key:
+    judge: judge_routing_key
 # 接口文档配置
 knife4j:
   enable: true

@@ -24,6 +24,19 @@ mybatis-plus:
   configuration:
     # 开发环境打印SQL日志
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+rabbitmq:
+  host: 127.0.0.1
+  port: 5672
+  username: guest
+  password: guest
+  virtual-host: /
+  listener:
+    simple:
+      concurrency: 3          # 最小消费者数量
+      max-concurrency: 10     # 最大消费者数量
+      acknowledge-mode: manual # 手动确认
+      prefetch: 1             # 每次只处理一个消息
 # 代码沙箱 - 本地开发地址
 codesandbox:
   url: http://localhost:8090/execute

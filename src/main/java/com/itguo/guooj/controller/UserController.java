@@ -55,6 +55,9 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private CaptchaController captchaController;
+
     // region 登录相关
 
     /**
@@ -67,6 +70,9 @@ public class UserController {
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (!captchaController.verifyCaptcha(userRegisterRequest.getCaptchaId(), userRegisterRequest.getCaptchaCode())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误或已过期");
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -90,6 +96,9 @@ public class UserController {
     public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (!captchaController.verifyCaptcha(userLoginRequest.getCaptchaId(), userLoginRequest.getCaptchaCode())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误或已过期");
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();

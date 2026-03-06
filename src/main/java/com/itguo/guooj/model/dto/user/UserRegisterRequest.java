@@ -20,4 +20,8 @@ public class UserRegisterRequest implements Serializable {
     private String checkPassword;
 
     private String userName;
+
+    private String captchaId;
+
+    private String captchaCode;
 }
